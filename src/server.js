@@ -2,14 +2,19 @@ require("dotenv").config();
 
 const express = require("express");
 const path = require("path");
+const crypto = require("crypto");
 const { Pool } = require("pg");
 
 const app = express();
 const port = process.env.PORT || 3000;
 const databaseUrl = process.env.DATABASE_URL;
+const authEmail = process.env.AUTH_EMAIL || "kalefcgonzaleshl2@gmail.com";
+const authPassword = process.env.AUTH_PASSWORD || "";
+const sessionSecret = process.env.SESSION_SECRET || "cambia-este-secreto-en-render";
 
 app.use(express.json());
-app.use(express.static(path.join(__dirname, "..", "public")));
+
+const publicDir = path.join(__dirname, "..", "public");
 
 const pool = databaseUrl
   ? new Pool({
@@ -58,6 +63,95 @@ function requiredText(value, field) {
   }
   return text;
 }
+
+function parseCookies(header = "") {
+  return Object.fromEntries(header.split(";").filter(Boolean).map((cookie) => {
+    const index = cookie.indexOf("=");
+    if (index === -1) return ["", ""];
+    const key = decodeURIComponent(cookie.slice(0, index).trim());
+    const value = decodeURIComponent(cookie.slice(index + 1).trim());
+    return [key, value];
+  }).filter(([key]) => key));
+}
+
+function signSession(email) {
+  const payload = Buffer.from(JSON.stringify({ email, createdAt: Date.now() })).toString("base64url");
+  const signature = crypto.createHmac("sha256", sessionSecret).update(payload).digest("base64url");
+  return `${payload}.${signature}`;
+}
+
+function verifySession(token) {
+  if (!token || !token.includes(".")) return null;
+  const [payload, signature] = token.split(".");
+  const expected = crypto.createHmac("sha256", sessionSecret).update(payload).digest("base64url");
+  if (Buffer.byteLength(signature) !== Buffer.byteLength(expected)) return null;
+  if (!crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected))) return null;
+
+  const data = JSON.parse(Buffer.from(payload, "base64url").toString("utf8"));
+  const maxAge = 1000 * 60 * 60 * 8;
+  if (Date.now() - data.createdAt > maxAge) return null;
+  return data;
+}
+
+function currentUser(req) {
+  const cookies = parseCookies(req.headers.cookie);
+  return verifySession(cookies.session);
+}
+
+function requireAuth(req, res, next) {
+  if (currentUser(req)) return next();
+  if (req.path.startsWith("/api/")) {
+    return res.status(401).json({ error: "Inicia sesion para continuar." });
+  }
+  return res.redirect("/login.html");
+}
+
+app.get("/login.html", (req, res) => {
+  if (currentUser(req)) return res.redirect("/");
+  res.sendFile(path.join(publicDir, "login.html"));
+});
+
+app.get("/login.js", (req, res) => {
+  res.sendFile(path.join(publicDir, "login.js"));
+});
+
+app.get("/styles.css", (req, res) => {
+  res.sendFile(path.join(publicDir, "styles.css"));
+});
+
+app.post("/api/login", (req, res) => {
+  const email = String(req.body.email || "").trim();
+  const password = String(req.body.password || "");
+
+  if (!authPassword) {
+    return res.status(500).json({ error: "AUTH_PASSWORD no esta configurado en el servidor." });
+  }
+
+  if (email !== authEmail || password !== authPassword) {
+    return res.status(401).json({ error: "Credenciales incorrectas." });
+  }
+
+  const secure = req.headers["x-forwarded-proto"] === "https" || req.secure;
+  res.cookie("session", signSession(email), {
+    httpOnly: true,
+    secure,
+    sameSite: "lax",
+    maxAge: 1000 * 60 * 60 * 8
+  });
+  res.json({ ok: true, email });
+});
+
+app.post("/api/logout", (req, res) => {
+  res.clearCookie("session");
+  res.json({ ok: true });
+});
+
+app.get("/api/session", requireAuth, (req, res) => {
+  res.json({ user: currentUser(req) });
+});
+
+app.use(requireAuth);
+app.use(express.static(publicDir));
 
 async function initDatabase() {
   if (!pool) return;

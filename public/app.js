@@ -319,6 +319,15 @@ document.querySelector("#sale-form").addEventListener("submit", async (event) =>
 
 document.querySelector("#add-line").addEventListener("click", addSaleLine);
 
+document.querySelector("#logout-app").addEventListener("click", async () => {
+  try {
+    await api("/api/logout", { method: "POST" });
+    window.location.href = "/login.html";
+  } catch (error) {
+    toast(error.message);
+  }
+});
+
 document.querySelector("#reset-app").addEventListener("click", async () => {
   const confirmation = window.prompt("Esta accion borrara productos, clientes y ventas. Escribe REINICIAR para confirmar.");
   if (confirmation !== "REINICIAR") {

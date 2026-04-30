@@ -100,6 +100,17 @@ button.danger.outline:hover {
   border-color: rgba(255, 118, 103, 0.75);
 }
 
+button.sidebar-button {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.18);
+  color: #ffffff;
+  width: 100%;
+}
+
+button.sidebar-button:hover {
+  background: rgba(255, 255, 255, 0.14);
+}
+
 button.full-button {
   width: 100%;
 }
@@ -551,6 +562,43 @@ th {
 #toast.show {
   opacity: 1;
   transform: translateX(-50%) translateY(0);
+}
+
+.login-page {
+  background: #17212b;
+}
+
+.login-shell {
+  align-items: center;
+  display: grid;
+  min-height: 100vh;
+  padding: 24px;
+}
+
+.login-card {
+  background: #ffffff;
+  border-radius: var(--radius);
+  box-shadow: 0 28px 70px rgba(0, 0, 0, 0.28);
+  margin: 0 auto;
+  max-width: 430px;
+  padding: 28px;
+  width: 100%;
+}
+
+.login-brand {
+  align-items: center;
+  display: flex;
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+.login-brand h1 {
+  font-size: 26px;
+}
+
+.login-form {
+  display: grid;
+  gap: 14px;
 }
 
 @media (max-width: 1180px) {

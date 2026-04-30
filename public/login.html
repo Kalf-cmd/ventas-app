@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Iniciar sesion | Sistema de Ventas</title>
+    <link rel="stylesheet" href="/styles.css">
+  </head>
+  <body class="login-page">
+    <main class="login-shell">
+      <section class="login-card">
+        <div class="login-brand">
+          <span class="brand-mark">SV</span>
+          <div>
+            <p class="eyebrow">Acceso seguro</p>
+            <h1>Sistema de Ventas</h1>
+          </div>
+        </div>
+
+        <form id="login-form" class="login-form">
+          <label>
+            <span>Correo</span>
+            <input name="email" type="email" placeholder="usuario@correo.com" autocomplete="username" required>
+          </label>
+          <label>
+            <span>Contrasena</span>
+            <input name="password" type="password" placeholder="Ingresa tu contrasena" autocomplete="current-password" required>
+          </label>
+          <button type="submit" class="full-button">Ingresar</button>
+        </form>
+      </section>
+    </main>
+
+    <div id="toast" role="status" aria-live="polite"></div>
+    <script src="/login.js"></script>
+  </body>
+</html>

@@ -33,7 +33,8 @@ Si Render tiene configurado el comando `node index.js`, tambien funcionara porqu
 1. Sube este proyecto a GitHub.
 2. En Render, crea un nuevo **Blueprint** usando el archivo `render.yaml`.
 3. Render creara el Web Service y la base de datos PostgreSQL.
-4. Cuando termine el despliegue, abre la URL `onrender.com`.
+4. Configura las variables secretas `AUTH_PASSWORD` y `SESSION_SECRET`.
+5. Cuando termine el despliegue, abre la URL `onrender.com`.
 
 Tambien puedes hacerlo manualmente:
 
@@ -43,6 +44,13 @@ Tambien puedes hacerlo manualmente:
 - Start Command: `npm start`.
 - Agrega una base de datos PostgreSQL.
 - En el Web Service, crea la variable `DATABASE_URL` con la connection string interna de PostgreSQL.
+- Crea `AUTH_EMAIL` con el correo permitido.
+- Crea `AUTH_PASSWORD` con la contrasena de acceso.
+- Crea `SESSION_SECRET` con un texto largo y dificil de adivinar.
+
+## Acceso
+
+La aplicacion muestra una pantalla de login antes de entrar al panel. Las credenciales se leen desde variables de entorno para no guardar la contrasena dentro del repositorio.
 
 ## Estructura
 
