@@ -94,7 +94,7 @@ function renderCustomers() {
 }
 
 function productOptions() {
-  return state.products.map((product) => (
+  return state.products.filter((product) => product.stock > 0).map((product) => (
     `<option value="${product.id}">${product.name} - ${formatMoney(product.price)} - Stock ${product.stock}</option>`
   )).join("");
 }
@@ -107,6 +107,11 @@ function customerOptions() {
 }
 
 function addSaleLine() {
+  if (!state.products.some((product) => product.stock > 0)) {
+    toast("No hay productos con stock disponible.");
+    return;
+  }
+
   const lines = document.querySelector("#sale-lines");
   const line = document.createElement("div");
   line.className = "sale-line";
@@ -122,6 +127,7 @@ function addSaleLine() {
   line.addEventListener("input", updateSaleTotal);
   line.addEventListener("change", updateSaleTotal);
   lines.appendChild(line);
+  syncSaleLineStock(line);
   updateSaleTotal();
 }
 
@@ -134,19 +140,54 @@ function renderSaleForm() {
     const value = select.value;
     select.innerHTML = productOptions();
     select.value = value;
+    if (!select.value) select.closest(".sale-line").remove();
   }
   updateSaleTotal();
+}
+
+function syncSaleLineStock(line) {
+  const productId = Number(line.querySelector("[name='product_id']").value);
+  const quantityInput = line.querySelector("[name='quantity']");
+  const product = state.products.find((item) => item.id === productId);
+
+  if (!product) return;
+  quantityInput.max = product.stock;
+  if (Number(quantityInput.value) > product.stock) {
+    quantityInput.value = product.stock;
+  }
 }
 
 function updateSaleTotal() {
   let total = 0;
   for (const line of document.querySelectorAll(".sale-line")) {
+    syncSaleLineStock(line);
     const productId = Number(line.querySelector("[name='product_id']").value);
     const quantity = Number(line.querySelector("[name='quantity']").value || 0);
     const product = state.products.find((item) => item.id === productId);
     total += product ? Number(product.price) * quantity : 0;
   }
   document.querySelector("#sale-total").textContent = formatMoney(total);
+}
+
+function validateSaleItems(items) {
+  const quantitiesByProduct = new Map();
+
+  for (const item of items) {
+    const productId = Number(item.product_id);
+    const quantity = Number(item.quantity);
+    if (!productId || !Number.isInteger(quantity) || quantity <= 0) {
+      throw new Error("Revisa los productos y cantidades de la venta.");
+    }
+    quantitiesByProduct.set(productId, (quantitiesByProduct.get(productId) || 0) + quantity);
+  }
+
+  for (const [productId, quantity] of quantitiesByProduct) {
+    const product = state.products.find((item) => item.id === productId);
+    if (!product) throw new Error("Producto no encontrado.");
+    if (quantity > product.stock) {
+      throw new Error(`Stock insuficiente para ${product.name}. Disponible: ${product.stock}.`);
+    }
+  }
 }
 
 function renderSales() {
@@ -172,26 +213,34 @@ document.querySelector("#product-form").addEventListener("submit", async (event)
   event.preventDefault();
   const productForm = event.currentTarget;
   const form = new FormData(productForm);
-  await api("/api/products", {
-    method: "POST",
-    body: JSON.stringify(Object.fromEntries(form))
-  });
-  productForm.reset();
-  toast("Producto guardado.");
-  await loadAll();
+  try {
+    await api("/api/products", {
+      method: "POST",
+      body: JSON.stringify(Object.fromEntries(form))
+    });
+    productForm.reset();
+    toast("Producto guardado.");
+    await loadAll();
+  } catch (error) {
+    toast(error.message);
+  }
 });
 
 document.querySelector("#customer-form").addEventListener("submit", async (event) => {
   event.preventDefault();
   const customerForm = event.currentTarget;
   const form = new FormData(customerForm);
-  await api("/api/customers", {
-    method: "POST",
-    body: JSON.stringify(Object.fromEntries(form))
-  });
-  customerForm.reset();
-  toast("Cliente guardado.");
-  await loadAll();
+  try {
+    await api("/api/customers", {
+      method: "POST",
+      body: JSON.stringify(Object.fromEntries(form))
+    });
+    customerForm.reset();
+    toast("Cliente guardado.");
+    await loadAll();
+  } catch (error) {
+    toast(error.message);
+  }
 });
 
 document.querySelector("#sale-form").addEventListener("submit", async (event) => {
@@ -201,17 +250,22 @@ document.querySelector("#sale-form").addEventListener("submit", async (event) =>
     quantity: line.querySelector("[name='quantity']").value
   }));
 
-  await api("/api/sales", {
-    method: "POST",
-    body: JSON.stringify({
-      customer_id: document.querySelector("#sale-customer").value,
-      items
-    })
-  });
+  try {
+    validateSaleItems(items);
+    await api("/api/sales", {
+      method: "POST",
+      body: JSON.stringify({
+        customer_id: document.querySelector("#sale-customer").value,
+        items
+      })
+    });
 
-  document.querySelector("#sale-lines").innerHTML = "";
-  toast("Venta registrada.");
-  await loadAll();
+    document.querySelector("#sale-lines").innerHTML = "";
+    toast("Venta registrada.");
+    await loadAll();
+  } catch (error) {
+    toast(error.message);
+  }
 });
 
 document.querySelector("#add-line").addEventListener("click", addSaleLine);
@@ -221,15 +275,23 @@ document.body.addEventListener("click", async (event) => {
   const customerId = event.target.dataset.deleteCustomer;
 
   if (productId) {
-    await api(`/api/products/${productId}`, { method: "DELETE" });
-    toast("Producto eliminado.");
-    await loadAll();
+    try {
+      await api(`/api/products/${productId}`, { method: "DELETE" });
+      toast("Producto eliminado.");
+      await loadAll();
+    } catch (error) {
+      toast(error.message);
+    }
   }
 
   if (customerId) {
-    await api(`/api/customers/${customerId}`, { method: "DELETE" });
-    toast("Cliente eliminado.");
-    await loadAll();
+    try {
+      await api(`/api/customers/${customerId}`, { method: "DELETE" });
+      toast("Cliente eliminado.");
+      await loadAll();
+    } catch (error) {
+      toast(error.message);
+    }
   }
 });
 
