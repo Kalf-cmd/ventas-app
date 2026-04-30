@@ -1,0 +1,26 @@
+{
+  "name": "sistema-ventas-render",
+  "version": "1.0.0",
+  "description": "Sistema web pequeno de gestion de ventas para desplegar en Render.",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js"
+  },
+  "keywords": [
+    "ventas",
+    "express",
+    "render",
+    "postgresql"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "pg": "^8.13.1"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Sistema de Ventas</title>
+    <link rel="stylesheet" href="/styles.css">
+  </head>
+  <body>
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Gestion comercial</p>
+        <h1>Sistema de Ventas</h1>
+      </div>
+      <span id="mode" class="badge">Cargando</span>
+    </header>
+
+    <main>
+      <section class="metrics" aria-label="Resumen">
+        <article>
+          <span>Productos</span>
+          <strong id="metric-products">0</strong>
+        </article>
+        <article>
+          <span>Clientes</span>
+          <strong id="metric-customers">0</strong>
+        </article>
+        <article>
+          <span>Ventas</span>
+          <strong id="metric-sales">0</strong>
+        </article>
+        <article>
+          <span>Ingresos</span>
+          <strong id="metric-revenue">S/ 0.00</strong>
+        </article>
+      </section>
+
+      <section class="workspace">
+        <div class="panel">
+          <div class="panel-title">
+            <h2>Productos</h2>
+          </div>
+          <form id="product-form" class="form-grid">
+            <input name="name" placeholder="Producto" required>
+            <input name="price" type="number" min="0.01" step="0.01" placeholder="Precio" required>
+            <input name="stock" type="number" min="0" step="1" placeholder="Stock" required>
+            <button type="submit">Guardar</button>
+          </form>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Producto</th>
+                  <th>Precio</th>
+                  <th>Stock</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="products-table"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">
+            <h2>Clientes</h2>
+          </div>
+          <form id="customer-form" class="form-grid">
+            <input name="name" placeholder="Cliente" required>
+            <input name="document" placeholder="DNI/RUC">
+            <input name="email" type="email" placeholder="Correo">
+            <button type="submit">Guardar</button>
+          </form>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Cliente</th>
+                  <th>Documento</th>
+                  <th>Correo</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="customers-table"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="panel sale-panel">
+          <div class="panel-title">
+            <h2>Nueva venta</h2>
+            <button id="add-line" type="button" class="secondary">Agregar item</button>
+          </div>
+          <form id="sale-form">
+            <select name="customer_id" id="sale-customer">
+              <option value="">Cliente general</option>
+            </select>
+            <div id="sale-lines" class="sale-lines"></div>
+            <div class="sale-total">
+              <span>Total</span>
+              <strong id="sale-total">S/ 0.00</strong>
+            </div>
+            <button type="submit">Registrar venta</button>
+          </form>
+        </div>
+
+        <div class="panel sales-history">
+          <div class="panel-title">
+            <h2>Ultimas ventas</h2>
+          </div>
+          <div id="sales-list" class="sales-list"></div>
+        </div>
+      </section>
+    </main>
+
+    <div id="toast" role="status" aria-live="polite"></div>
+    <script src="/app.js"></script>
+  </body>
+</html>
