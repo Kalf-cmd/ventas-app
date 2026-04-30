@@ -7,111 +7,173 @@
     <link rel="stylesheet" href="/styles.css">
   </head>
   <body>
-    <header class="topbar">
-      <div>
-        <p class="eyebrow">Gestion comercial</p>
-        <h1>Sistema de Ventas</h1>
-      </div>
-      <span id="mode" class="badge">Cargando</span>
-    </header>
-
-    <main>
-      <section class="metrics" aria-label="Resumen">
-        <article>
-          <span>Productos</span>
-          <strong id="metric-products">0</strong>
-        </article>
-        <article>
-          <span>Clientes</span>
-          <strong id="metric-customers">0</strong>
-        </article>
-        <article>
-          <span>Ventas</span>
-          <strong id="metric-sales">0</strong>
-        </article>
-        <article>
-          <span>Ingresos</span>
-          <strong id="metric-revenue">S/ 0.00</strong>
-        </article>
-      </section>
-
-      <section class="workspace">
-        <div class="panel">
-          <div class="panel-title">
-            <h2>Productos</h2>
-          </div>
-          <form id="product-form" class="form-grid">
-            <input name="name" placeholder="Producto" required>
-            <input name="price" type="number" min="0.01" step="0.01" placeholder="Precio" required>
-            <input name="stock" type="number" min="0" step="1" placeholder="Stock" required>
-            <button type="submit">Guardar</button>
-          </form>
-          <div class="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Producto</th>
-                  <th>Precio</th>
-                  <th>Stock</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody id="products-table"></tbody>
-            </table>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <span class="brand-mark">SV</span>
+          <div>
+            <strong>Sistema de Ventas</strong>
+            <small>Gestion comercial</small>
           </div>
         </div>
 
-        <div class="panel">
-          <div class="panel-title">
-            <h2>Clientes</h2>
-          </div>
-          <form id="customer-form" class="form-grid">
-            <input name="name" placeholder="Cliente" required>
-            <input name="document" placeholder="DNI/RUC">
-            <input name="email" type="email" placeholder="Correo">
-            <button type="submit">Guardar</button>
-          </form>
-          <div class="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Cliente</th>
-                  <th>Documento</th>
-                  <th>Correo</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody id="customers-table"></tbody>
-            </table>
-          </div>
-        </div>
+        <nav class="nav-list" aria-label="Principal">
+          <a class="active" href="#ventas"><span></span>Ventas</a>
+          <a href="#productos"><span></span>Productos</a>
+          <a href="#clientes"><span></span>Clientes</a>
+          <a href="#historial"><span></span>Historial</a>
+        </nav>
 
-        <div class="panel sale-panel">
-          <div class="panel-title">
-            <h2>Nueva venta</h2>
-            <button id="add-line" type="button" class="secondary">Agregar item</button>
+        <div class="sidebar-status">
+          <small>Base de datos</small>
+          <span id="mode" class="badge">Cargando</span>
+        </div>
+      </aside>
+
+      <div class="content-shell">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">Panel operativo</p>
+            <h1>Control de ventas</h1>
           </div>
-          <form id="sale-form">
-            <select name="customer_id" id="sale-customer">
-              <option value="">Cliente general</option>
-            </select>
-            <div id="sale-lines" class="sale-lines"></div>
-            <div class="sale-total">
-              <span>Total</span>
-              <strong id="sale-total">S/ 0.00</strong>
+          <div class="topbar-actions">
+            <span>Produccion</span>
+            <strong>Render Cloud</strong>
+          </div>
+        </header>
+
+        <main>
+          <section class="metrics" aria-label="Resumen">
+            <article>
+              <span>Productos</span>
+              <strong id="metric-products">0</strong>
+            </article>
+            <article>
+              <span>Clientes</span>
+              <strong id="metric-customers">0</strong>
+            </article>
+            <article>
+              <span>Ventas</span>
+              <strong id="metric-sales">0</strong>
+            </article>
+            <article class="metric-revenue">
+              <span>Ingresos</span>
+              <strong id="metric-revenue">S/ 0.00</strong>
+            </article>
+          </section>
+
+          <section class="workspace">
+            <div id="ventas" class="panel sale-panel">
+              <div class="panel-title">
+                <div>
+                  <p class="section-label">Operacion</p>
+                  <h2>Nueva venta</h2>
+                </div>
+                <button id="add-line" type="button" class="secondary">Agregar item</button>
+              </div>
+              <form id="sale-form">
+                <label>
+                  <span>Cliente</span>
+                  <select name="customer_id" id="sale-customer">
+                    <option value="">Cliente general</option>
+                  </select>
+                </label>
+                <div id="sale-lines" class="sale-lines"></div>
+                <div class="sale-total">
+                  <span>Total de venta</span>
+                  <strong id="sale-total">S/ 0.00</strong>
+                </div>
+                <button type="submit" class="full-button">Registrar venta</button>
+              </form>
             </div>
-            <button type="submit">Registrar venta</button>
-          </form>
-        </div>
 
-        <div class="panel sales-history">
-          <div class="panel-title">
-            <h2>Ultimas ventas</h2>
-          </div>
-          <div id="sales-list" class="sales-list"></div>
-        </div>
-      </section>
-    </main>
+            <div id="historial" class="panel sales-history">
+              <div class="panel-title">
+                <div>
+                  <p class="section-label">Actividad</p>
+                  <h2>Ultimas ventas</h2>
+                </div>
+              </div>
+              <div id="sales-list" class="sales-list"></div>
+            </div>
+
+            <div id="productos" class="panel catalog-panel">
+              <div class="panel-title">
+                <div>
+                  <p class="section-label">Inventario</p>
+                  <h2>Productos</h2>
+                </div>
+              </div>
+              <form id="product-form" class="form-grid">
+                <label>
+                  <span>Producto</span>
+                  <input name="name" placeholder="Nombre del producto" required>
+                </label>
+                <label>
+                  <span>Precio</span>
+                  <input name="price" type="number" min="0.01" step="0.01" placeholder="0.00" required>
+                </label>
+                <label>
+                  <span>Stock</span>
+                  <input name="stock" type="number" min="0" step="1" placeholder="0" required>
+                </label>
+                <button type="submit">Guardar</button>
+              </form>
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Producto</th>
+                      <th>Precio</th>
+                      <th>Stock</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody id="products-table"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <div id="clientes" class="panel catalog-panel">
+              <div class="panel-title">
+                <div>
+                  <p class="section-label">Comercial</p>
+                  <h2>Clientes</h2>
+                </div>
+              </div>
+              <form id="customer-form" class="form-grid">
+                <label>
+                  <span>Cliente</span>
+                  <input name="name" placeholder="Nombre del cliente" required>
+                </label>
+                <label>
+                  <span>DNI/RUC</span>
+                  <input name="document" placeholder="Documento">
+                </label>
+                <label>
+                  <span>Correo</span>
+                  <input name="email" type="email" placeholder="correo@empresa.com">
+                </label>
+                <button type="submit">Guardar</button>
+              </form>
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Cliente</th>
+                      <th>Documento</th>
+                      <th>Correo</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody id="customers-table"></tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+        </main>
+      </div>
+    </div>
 
     <div id="toast" role="status" aria-live="polite"></div>
     <script src="/app.js"></script>
