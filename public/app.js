@@ -170,24 +170,26 @@ function renderSales() {
 
 document.querySelector("#product-form").addEventListener("submit", async (event) => {
   event.preventDefault();
-  const form = new FormData(event.currentTarget);
+  const productForm = event.currentTarget;
+  const form = new FormData(productForm);
   await api("/api/products", {
     method: "POST",
     body: JSON.stringify(Object.fromEntries(form))
   });
-  event.currentTarget.reset();
+  productForm.reset();
   toast("Producto guardado.");
   await loadAll();
 });
 
 document.querySelector("#customer-form").addEventListener("submit", async (event) => {
   event.preventDefault();
-  const form = new FormData(event.currentTarget);
+  const customerForm = event.currentTarget;
+  const form = new FormData(customerForm);
   await api("/api/customers", {
     method: "POST",
     body: JSON.stringify(Object.fromEntries(form))
   });
-  event.currentTarget.reset();
+  customerForm.reset();
   toast("Cliente guardado.");
   await loadAll();
 });
