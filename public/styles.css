@@ -82,6 +82,18 @@ button.danger {
   padding: 5px 9px;
 }
 
+button.danger.outline {
+  background: transparent;
+  border-color: rgba(255, 118, 103, 0.45);
+  color: #ffd2ca;
+  min-height: 40px;
+}
+
+button.danger.outline:hover {
+  background: rgba(180, 35, 24, 0.16);
+  border-color: rgba(255, 118, 103, 0.75);
+}
+
 button.full-button {
   width: 100%;
 }
@@ -173,7 +185,8 @@ h2 {
 }
 
 .brand small,
-.sidebar-status small {
+.sidebar-status small,
+.danger-zone small {
   color: #a8b7c5;
   font-size: 12px;
   margin-top: 2px;
@@ -215,6 +228,17 @@ h2 {
   border-radius: var(--radius);
   margin-top: auto;
   padding: 14px;
+}
+
+.danger-zone {
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  display: grid;
+  gap: 10px;
+  padding-top: 14px;
+}
+
+.danger-zone button {
+  width: 100%;
 }
 
 .badge {

@@ -270,6 +270,26 @@ document.querySelector("#sale-form").addEventListener("submit", async (event) =>
 
 document.querySelector("#add-line").addEventListener("click", addSaleLine);
 
+document.querySelector("#reset-app").addEventListener("click", async () => {
+  const confirmation = window.prompt("Esta accion borrara productos, clientes y ventas. Escribe REINICIAR para confirmar.");
+  if (confirmation !== "REINICIAR") {
+    toast("Reinicio cancelado.");
+    return;
+  }
+
+  try {
+    await api("/api/reset", {
+      method: "POST",
+      body: JSON.stringify({ confirmation })
+    });
+    document.querySelector("#sale-lines").innerHTML = "";
+    toast("Aplicacion reiniciada desde cero.");
+    await loadAll();
+  } catch (error) {
+    toast(error.message);
+  }
+});
+
 document.body.addEventListener("click", async (event) => {
   const productId = event.target.dataset.deleteProduct;
   const customerId = event.target.dataset.deleteCustomer;

@@ -377,6 +377,29 @@ app.post("/api/sales", asyncRoute(async (req, res) => {
   }
 }));
 
+app.post("/api/reset", asyncRoute(async (req, res) => {
+  const confirmation = String(req.body.confirmation || "").trim();
+  if (confirmation !== "REINICIAR") {
+    return res.status(400).json({ error: "Escribe REINICIAR para confirmar." });
+  }
+
+  if (!pool) {
+    memory.products = [];
+    memory.customers = [];
+    memory.sales = [];
+    memory.saleItems = [];
+    memory.nextProductId = 1;
+    memory.nextCustomerId = 1;
+    memory.nextSaleId = 1;
+    memory.nextSaleItemId = 1;
+    res.json({ ok: true });
+    return;
+  }
+
+  await pool.query("TRUNCATE TABLE sale_items, sales, products, customers RESTART IDENTITY CASCADE");
+  res.json({ ok: true });
+}));
+
 app.use((error, req, res, next) => {
   console.error(error);
   res.status(400).json({ error: error.message || "No se pudo procesar la solicitud." });
