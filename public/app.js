@@ -1,7 +1,12 @@
 const state = {
   products: [],
   customers: [],
-  sales: []
+  sales: [],
+  pagination: {
+    products: { page: 1, perPage: 6 },
+    customers: { page: 1, perPage: 6 },
+    sales: { page: 1, perPage: 5 }
+  }
 };
 
 const formatMoney = (value) => `S/ ${Number(value || 0).toFixed(2)}`;
@@ -30,6 +35,38 @@ function toast(message) {
 
 function rowMessage(columns, message) {
   return `<tr><td colspan="${columns}" class="empty">${message}</td></tr>`;
+}
+
+function getPageItems(items, pagination) {
+  const totalPages = Math.max(1, Math.ceil(items.length / pagination.perPage));
+  pagination.page = Math.min(Math.max(1, pagination.page), totalPages);
+  const start = (pagination.page - 1) * pagination.perPage;
+  return {
+    items: items.slice(start, start + pagination.perPage),
+    totalPages
+  };
+}
+
+function renderPagination(id, collectionName, totalItems, totalPages) {
+  const pagination = state.pagination[collectionName];
+  const element = document.querySelector(id);
+  if (!element) return;
+
+  if (totalItems <= pagination.perPage) {
+    element.innerHTML = "";
+    return;
+  }
+
+  const start = (pagination.page - 1) * pagination.perPage + 1;
+  const end = Math.min(totalItems, pagination.page * pagination.perPage);
+  element.innerHTML = `
+    <span>Mostrando ${start}-${end} de ${totalItems}</span>
+    <div>
+      <button type="button" class="secondary" data-page="${collectionName}" data-direction="-1" ${pagination.page === 1 ? "disabled" : ""}>Anterior</button>
+      <strong>Pagina ${pagination.page} de ${totalPages}</strong>
+      <button type="button" class="secondary" data-page="${collectionName}" data-direction="1" ${pagination.page === totalPages ? "disabled" : ""}>Siguiente</button>
+    </div>
+  `;
 }
 
 async function loadAll() {
@@ -63,10 +100,12 @@ function renderProducts() {
   const table = document.querySelector("#products-table");
   if (state.products.length === 0) {
     table.innerHTML = rowMessage(4, "Sin productos.");
+    renderPagination("#products-pagination", "products", 0, 1);
     return;
   }
 
-  table.innerHTML = state.products.map((product) => `
+  const page = getPageItems(state.products, state.pagination.products);
+  table.innerHTML = page.items.map((product) => `
     <tr>
       <td>${product.name}</td>
       <td>${formatMoney(product.price)}</td>
@@ -74,16 +113,19 @@ function renderProducts() {
       <td><button class="danger" data-delete-product="${product.id}">Eliminar</button></td>
     </tr>
   `).join("");
+  renderPagination("#products-pagination", "products", state.products.length, page.totalPages);
 }
 
 function renderCustomers() {
   const table = document.querySelector("#customers-table");
   if (state.customers.length === 0) {
     table.innerHTML = rowMessage(4, "Sin clientes.");
+    renderPagination("#customers-pagination", "customers", 0, 1);
     return;
   }
 
-  table.innerHTML = state.customers.map((customer) => `
+  const page = getPageItems(state.customers, state.pagination.customers);
+  table.innerHTML = page.items.map((customer) => `
     <tr>
       <td>${customer.name}</td>
       <td>${customer.document || "-"}</td>
@@ -91,6 +133,7 @@ function renderCustomers() {
       <td><button class="danger" data-delete-customer="${customer.id}">Eliminar</button></td>
     </tr>
   `).join("");
+  renderPagination("#customers-pagination", "customers", state.customers.length, page.totalPages);
 }
 
 function productOptions() {
@@ -194,10 +237,12 @@ function renderSales() {
   const list = document.querySelector("#sales-list");
   if (state.sales.length === 0) {
     list.innerHTML = "<p class=\"empty\">Todavia no hay ventas.</p>";
+    renderPagination("#sales-pagination", "sales", 0, 1);
     return;
   }
 
-  list.innerHTML = state.sales.map((sale) => `
+  const page = getPageItems(state.sales, state.pagination.sales);
+  list.innerHTML = page.items.map((sale) => `
     <article class="sale-card">
       <header>
         <strong>Venta #${sale.id}</strong>
@@ -207,6 +252,7 @@ function renderSales() {
       ${sale.items.map((item) => `<p>${item.quantity} x ${item.product_name} - ${formatMoney(item.subtotal)}</p>`).join("")}
     </article>
   `).join("");
+  renderPagination("#sales-pagination", "sales", state.sales.length, page.totalPages);
 }
 
 document.querySelector("#product-form").addEventListener("submit", async (event) => {
@@ -219,6 +265,7 @@ document.querySelector("#product-form").addEventListener("submit", async (event)
       body: JSON.stringify(Object.fromEntries(form))
     });
     productForm.reset();
+    state.pagination.products.page = 1;
     toast("Producto guardado.");
     await loadAll();
   } catch (error) {
@@ -236,6 +283,7 @@ document.querySelector("#customer-form").addEventListener("submit", async (event
       body: JSON.stringify(Object.fromEntries(form))
     });
     customerForm.reset();
+    state.pagination.customers.page = 1;
     toast("Cliente guardado.");
     await loadAll();
   } catch (error) {
@@ -261,6 +309,7 @@ document.querySelector("#sale-form").addEventListener("submit", async (event) =>
     });
 
     document.querySelector("#sale-lines").innerHTML = "";
+    state.pagination.sales.page = 1;
     toast("Venta registrada.");
     await loadAll();
   } catch (error) {
@@ -283,6 +332,9 @@ document.querySelector("#reset-app").addEventListener("click", async () => {
       body: JSON.stringify({ confirmation })
     });
     document.querySelector("#sale-lines").innerHTML = "";
+    state.pagination.products.page = 1;
+    state.pagination.customers.page = 1;
+    state.pagination.sales.page = 1;
     toast("Aplicacion reiniciada desde cero.");
     await loadAll();
   } catch (error) {
@@ -293,10 +345,21 @@ document.querySelector("#reset-app").addEventListener("click", async () => {
 document.body.addEventListener("click", async (event) => {
   const productId = event.target.dataset.deleteProduct;
   const customerId = event.target.dataset.deleteCustomer;
+  const pageTarget = event.target.dataset.page;
+  const direction = Number(event.target.dataset.direction || 0);
+
+  if (pageTarget && direction) {
+    state.pagination[pageTarget].page += direction;
+    if (pageTarget === "products") renderProducts();
+    if (pageTarget === "customers") renderCustomers();
+    if (pageTarget === "sales") renderSales();
+    return;
+  }
 
   if (productId) {
     try {
       await api(`/api/products/${productId}`, { method: "DELETE" });
+      state.pagination.products.page = 1;
       toast("Producto eliminado.");
       await loadAll();
     } catch (error) {
@@ -307,6 +370,7 @@ document.body.addEventListener("click", async (event) => {
   if (customerId) {
     try {
       await api(`/api/customers/${customerId}`, { method: "DELETE" });
+      state.pagination.customers.page = 1;
       toast("Cliente eliminado.");
       await loadAll();
     } catch (error) {

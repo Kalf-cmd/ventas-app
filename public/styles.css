@@ -64,6 +64,12 @@ button:active {
   transform: translateY(1px);
 }
 
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+  transform: none;
+}
+
 button.secondary {
   background: #ffffff;
   border-color: var(--line);
@@ -468,6 +474,37 @@ th {
   gap: 10px;
 }
 
+.pagination {
+  align-items: center;
+  color: var(--muted);
+  display: flex;
+  font-size: 13px;
+  gap: 12px;
+  justify-content: space-between;
+  min-height: 42px;
+  padding-top: 12px;
+}
+
+.pagination:empty {
+  display: none;
+}
+
+.pagination div {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+}
+
+.pagination button {
+  min-height: 34px;
+  padding: 6px 10px;
+}
+
+.pagination strong {
+  color: var(--text);
+  font-size: 13px;
+}
+
 .sale-card {
   background: var(--surface-soft);
   border: 1px solid var(--line);
@@ -565,6 +602,12 @@ th {
   .form-grid,
   .sale-line {
     grid-template-columns: 1fr;
+  }
+
+  .pagination,
+  .pagination div {
+    align-items: stretch;
+    flex-direction: column;
   }
 }
 
