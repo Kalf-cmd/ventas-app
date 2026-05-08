@@ -185,14 +185,12 @@ h2 {
 }
 
 .brand-mark {
-  align-items: center;
   background: #f1a340;
   border-radius: 8px;
-  color: #1c2430;
-  display: inline-flex;
-  font-weight: 800;
+  display: block;
   height: 44px;
-  justify-content: center;
+  object-fit: cover;
+  padding: 4px;
   width: 44px;
 }
 
