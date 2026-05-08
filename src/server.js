@@ -322,6 +322,28 @@ app.post("/api/customers", asyncRoute(async (req, res) => {
   res.status(201).json(rows[0]);
 }));
 
+app.put("/api/customers/:id", asyncRoute(async (req, res) => {
+  const id = Number(req.params.id);
+  const name = requiredText(req.body.name, "Nombre");
+  const document = String(req.body.document || "").trim();
+  const email = String(req.body.email || "").trim();
+
+  if (!pool) {
+    const customer = memory.customers.find((item) => item.id === id);
+    if (!customer) return res.status(404).json({ error: "Cliente no encontrado." });
+    Object.assign(customer, { name, document, email });
+    res.json(customer);
+    return;
+  }
+
+  const { rows } = await pool.query(
+    "UPDATE customers SET name = $1, document = $2, email = $3 WHERE id = $4 RETURNING id, name, document, email, created_at",
+    [name, document, email, id]
+  );
+  if (!rows[0]) return res.status(404).json({ error: "Cliente no encontrado." });
+  res.json(rows[0]);
+}));
+
 app.delete("/api/customers/:id", asyncRoute(async (req, res) => {
   const id = Number(req.params.id);
 

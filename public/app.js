@@ -2,6 +2,13 @@ const state = {
   products: [],
   customers: [],
   sales: [],
+  editingProductId: null,
+  editingCustomerId: null,
+  filters: {
+    products: "",
+    customers: "",
+    sales: ""
+  },
   pagination: {
     products: { page: 1, perPage: 6 },
     customers: { page: 1, perPage: 6 },
@@ -10,6 +17,16 @@ const state = {
 };
 
 const formatMoney = (value) => `S/ ${Number(value || 0).toFixed(2)}`;
+
+function escapeHtml(value) {
+  return String(value ?? "").replace(/[&<>"']/g, (character) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    "\"": "&quot;",
+    "'": "&#039;"
+  }[character]));
+}
 
 async function api(path, options = {}) {
   const response = await fetch(path, {
@@ -98,42 +115,90 @@ function renderSummary(summary) {
 
 function renderProducts() {
   const table = document.querySelector("#products-table");
-  if (state.products.length === 0) {
+  const products = filteredProducts();
+
+  if (products.length === 0) {
     table.innerHTML = rowMessage(4, "Sin productos.");
     renderPagination("#products-pagination", "products", 0, 1);
     return;
   }
 
-  const page = getPageItems(state.products, state.pagination.products);
+  const page = getPageItems(products, state.pagination.products);
   table.innerHTML = page.items.map((product) => `
     <tr>
-      <td>${product.name}</td>
+      <td>${escapeHtml(product.name)}</td>
       <td>${formatMoney(product.price)}</td>
       <td>${product.stock}</td>
-      <td><button class="danger" data-delete-product="${product.id}">Eliminar</button></td>
+      <td>
+        <div class="row-actions">
+          <button class="secondary" data-edit-product="${product.id}">Editar</button>
+          <button class="danger" data-delete-product="${product.id}">Eliminar</button>
+        </div>
+      </td>
     </tr>
   `).join("");
-  renderPagination("#products-pagination", "products", state.products.length, page.totalPages);
+  renderPagination("#products-pagination", "products", products.length, page.totalPages);
 }
 
 function renderCustomers() {
   const table = document.querySelector("#customers-table");
-  if (state.customers.length === 0) {
+  const customers = filteredCustomers();
+
+  if (customers.length === 0) {
     table.innerHTML = rowMessage(4, "Sin clientes.");
     renderPagination("#customers-pagination", "customers", 0, 1);
     return;
   }
 
-  const page = getPageItems(state.customers, state.pagination.customers);
+  const page = getPageItems(customers, state.pagination.customers);
   table.innerHTML = page.items.map((customer) => `
     <tr>
-      <td>${customer.name}</td>
-      <td>${customer.document || "-"}</td>
-      <td>${customer.email || "-"}</td>
-      <td><button class="danger" data-delete-customer="${customer.id}">Eliminar</button></td>
+      <td>${escapeHtml(customer.name)}</td>
+      <td>${escapeHtml(customer.document || "-")}</td>
+      <td>${escapeHtml(customer.email || "-")}</td>
+      <td>
+        <div class="row-actions">
+          <button class="secondary" data-edit-customer="${customer.id}">Editar</button>
+          <button class="danger" data-delete-customer="${customer.id}">Eliminar</button>
+        </div>
+      </td>
     </tr>
   `).join("");
-  renderPagination("#customers-pagination", "customers", state.customers.length, page.totalPages);
+  renderPagination("#customers-pagination", "customers", customers.length, page.totalPages);
+}
+
+function filteredProducts() {
+  const query = state.filters.products.toLowerCase();
+  if (!query) return state.products;
+  return state.products.filter((product) => (
+    product.name.toLowerCase().includes(query)
+    || String(product.price).includes(query)
+    || String(product.stock).includes(query)
+  ));
+}
+
+function filteredCustomers() {
+  const query = state.filters.customers.toLowerCase();
+  if (!query) return state.customers;
+  return state.customers.filter((customer) => (
+    customer.name.toLowerCase().includes(query)
+    || String(customer.document || "").toLowerCase().includes(query)
+    || String(customer.email || "").toLowerCase().includes(query)
+  ));
+}
+
+function filteredSales() {
+  const query = state.filters.sales.toLowerCase();
+  if (!query) return state.sales;
+  return state.sales.filter((sale) => {
+    const products = sale.items.map((item) => item.product_name).join(" ");
+    return [
+      `venta ${sale.id}`,
+      sale.customer_name || "",
+      products,
+      String(sale.total)
+    ].join(" ").toLowerCase().includes(query);
+  });
 }
 
 function productOptions() {
@@ -235,24 +300,66 @@ function validateSaleItems(items) {
 
 function renderSales() {
   const list = document.querySelector("#sales-list");
-  if (state.sales.length === 0) {
+  const sales = filteredSales();
+
+  if (sales.length === 0) {
     list.innerHTML = "<p class=\"empty\">Todavia no hay ventas.</p>";
     renderPagination("#sales-pagination", "sales", 0, 1);
     return;
   }
 
-  const page = getPageItems(state.sales, state.pagination.sales);
+  const page = getPageItems(sales, state.pagination.sales);
   list.innerHTML = page.items.map((sale) => `
     <article class="sale-card">
       <header>
         <strong>Venta #${sale.id}</strong>
         <strong>${formatMoney(sale.total)}</strong>
       </header>
-      <p>${sale.customer_name || "Sin cliente"}</p>
-      ${sale.items.map((item) => `<p>${item.quantity} x ${item.product_name} - ${formatMoney(item.subtotal)}</p>`).join("")}
+      <p>${escapeHtml(sale.customer_name || "Sin cliente")}</p>
+      ${sale.items.map((item) => `<p>${item.quantity} x ${escapeHtml(item.product_name)} - ${formatMoney(item.subtotal)}</p>`).join("")}
     </article>
   `).join("");
-  renderPagination("#sales-pagination", "sales", state.sales.length, page.totalPages);
+  renderPagination("#sales-pagination", "sales", sales.length, page.totalPages);
+}
+
+function resetProductForm() {
+  state.editingProductId = null;
+  document.querySelector("#product-form").reset();
+  document.querySelector("#product-submit").textContent = "Guardar";
+  document.querySelector("#product-cancel").classList.add("hidden");
+}
+
+function resetCustomerForm() {
+  state.editingCustomerId = null;
+  document.querySelector("#customer-form").reset();
+  document.querySelector("#customer-submit").textContent = "Guardar";
+  document.querySelector("#customer-cancel").classList.add("hidden");
+}
+
+function editProduct(id) {
+  const product = state.products.find((item) => item.id === id);
+  if (!product) return;
+  const form = document.querySelector("#product-form");
+  form.elements.name.value = product.name;
+  form.elements.price.value = product.price;
+  form.elements.stock.value = product.stock;
+  state.editingProductId = id;
+  document.querySelector("#product-submit").textContent = "Actualizar";
+  document.querySelector("#product-cancel").classList.remove("hidden");
+  form.scrollIntoView({ behavior: "smooth", block: "center" });
+}
+
+function editCustomer(id) {
+  const customer = state.customers.find((item) => item.id === id);
+  if (!customer) return;
+  const form = document.querySelector("#customer-form");
+  form.elements.name.value = customer.name;
+  form.elements["document"].value = customer.document || "";
+  form.elements.email.value = customer.email || "";
+  state.editingCustomerId = id;
+  document.querySelector("#customer-submit").textContent = "Actualizar";
+  document.querySelector("#customer-cancel").classList.remove("hidden");
+  form.scrollIntoView({ behavior: "smooth", block: "center" });
 }
 
 document.querySelector("#product-form").addEventListener("submit", async (event) => {
@@ -260,13 +367,15 @@ document.querySelector("#product-form").addEventListener("submit", async (event)
   const productForm = event.currentTarget;
   const form = new FormData(productForm);
   try {
-    await api("/api/products", {
-      method: "POST",
+    const wasEditing = Boolean(state.editingProductId);
+    const path = wasEditing ? `/api/products/${state.editingProductId}` : "/api/products";
+    await api(path, {
+      method: wasEditing ? "PUT" : "POST",
       body: JSON.stringify(Object.fromEntries(form))
     });
-    productForm.reset();
+    resetProductForm();
     state.pagination.products.page = 1;
-    toast("Producto guardado.");
+    toast(wasEditing ? "Producto actualizado." : "Producto guardado.");
     await loadAll();
   } catch (error) {
     toast(error.message);
@@ -278,13 +387,15 @@ document.querySelector("#customer-form").addEventListener("submit", async (event
   const customerForm = event.currentTarget;
   const form = new FormData(customerForm);
   try {
-    await api("/api/customers", {
-      method: "POST",
+    const wasEditing = Boolean(state.editingCustomerId);
+    const path = wasEditing ? `/api/customers/${state.editingCustomerId}` : "/api/customers";
+    await api(path, {
+      method: wasEditing ? "PUT" : "POST",
       body: JSON.stringify(Object.fromEntries(form))
     });
-    customerForm.reset();
+    resetCustomerForm();
     state.pagination.customers.page = 1;
-    toast("Cliente guardado.");
+    toast(wasEditing ? "Cliente actualizado." : "Cliente guardado.");
     await loadAll();
   } catch (error) {
     toast(error.message);
@@ -318,6 +429,27 @@ document.querySelector("#sale-form").addEventListener("submit", async (event) =>
 });
 
 document.querySelector("#add-line").addEventListener("click", addSaleLine);
+
+document.querySelector("#product-cancel").addEventListener("click", resetProductForm);
+document.querySelector("#customer-cancel").addEventListener("click", resetCustomerForm);
+
+document.querySelector("#products-search").addEventListener("input", (event) => {
+  state.filters.products = event.target.value.trim();
+  state.pagination.products.page = 1;
+  renderProducts();
+});
+
+document.querySelector("#customers-search").addEventListener("input", (event) => {
+  state.filters.customers = event.target.value.trim();
+  state.pagination.customers.page = 1;
+  renderCustomers();
+});
+
+document.querySelector("#sales-search").addEventListener("input", (event) => {
+  state.filters.sales = event.target.value.trim();
+  state.pagination.sales.page = 1;
+  renderSales();
+});
 
 document.querySelector("#logout-app").addEventListener("click", async () => {
   try {
@@ -354,8 +486,20 @@ document.querySelector("#reset-app").addEventListener("click", async () => {
 document.body.addEventListener("click", async (event) => {
   const productId = event.target.dataset.deleteProduct;
   const customerId = event.target.dataset.deleteCustomer;
+  const editProductId = event.target.dataset.editProduct;
+  const editCustomerId = event.target.dataset.editCustomer;
   const pageTarget = event.target.dataset.page;
   const direction = Number(event.target.dataset.direction || 0);
+
+  if (editProductId) {
+    editProduct(Number(editProductId));
+    return;
+  }
+
+  if (editCustomerId) {
+    editCustomer(Number(editCustomerId));
+    return;
+  }
 
   if (pageTarget && direction) {
     state.pagination[pageTarget].page += direction;

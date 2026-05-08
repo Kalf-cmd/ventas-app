@@ -409,8 +409,23 @@ main {
   align-items: end;
   display: grid;
   gap: 10px;
-  grid-template-columns: 1.2fr 0.7fr 0.7fr auto;
+  grid-template-columns: 1.2fr 0.7fr 0.7fr auto auto;
   margin-bottom: 16px;
+}
+
+.panel-tools {
+  margin-bottom: 14px;
+}
+
+.hidden {
+  display: none;
+}
+
+.row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: flex-end;
 }
 
 .table-wrap {
